@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Area {
+  id                Int        @id @default(autoincrement())
+  name              String
+  code              String     @unique
+  description       String?
+  lowBuildingCount  Int        @default(0)
+  highBuildingCount Int        @default(0)
+  buildArea         Float      @default(0)
+  landArea          Float      @default(0)
+  publicArea        Float      @default(0)
+  greenArea         Float      @default(0)
+  roadArea          Float      @default(0)
+  parkingArea       Float      @default(0)
+  garageArea        Float      @default(0)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  buildings         Building[]
+  rooms             Room[]
+}
+
+model Building {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique
+  areaId      Int
+  description String?
+  floors      Int      @default(0)
+  units       Int      @default(0)
+  buildArea   Float    @default(0)
+  landArea    Float    @default(0)
+  address     String?  // 新增: 地址
+  buildingType String? // 新增: 楼宇类型 (住宅/商用等)
+  buildingStructure String? // 新增: 楼宇结构 (框架/砖混等)
+  orientation String? // 新增: 朝向
+  remark      String? // 新增: 备注 (与 description 区分，前端展示)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  area        Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  rooms       Room[]
+}
+
+model Room {
+  id            Int      @id @default(autoincrement())
+  roomNo        String
+  code          String   @unique
+  areaId        Int
+  buildingId    Int
+  floor         Int      @default(0)
+  unit          Int      @default(0)
+  size          Float    @default(0)
+  usableArea    Float    @default(0)
+  orientation   String?
+  purpose       String?
+  status        String   @default("idle")
+  ownerName     String?
+  customerName  String?
+  customerId    String?
+  ownershipType String?  // 新增: 权属类型 (自持/出售/租赁/其他)
+  fitmentStatus String?  // 新增: 装修情况 (毛坯/简装/精装/豪装/其他)
+  remark        String?  // 新增: 备注
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  area          Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  building      Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  customers     Customer[]
+}
+
+// 客户信息表（详细字段）
+model Customer {
+  id             Int      @id @default(autoincrement())
+  customerCode   String?  @unique // 客户编号，可选唯一
+  contact        String?  // 联系人
+  name           String   // 客户名称
+  roomCode       String?  // 房间编号（冗余存储，便于直接展示与导出）
+  type           String?  // 客户类型 (个人/企业)
+  phone          String?
+  address        String?
+  tel            String?
+  fax            String?
+  birthday       String?  // 简化为字符串
+  idType         String?  // 证件类型
+  idNumber       String?  // 证件号
+  moveInDate     String?  // 收楼日期
+  decorationDate String?  // 装修日期
+  bankId         String?
+  accountName    String?
+  bankAccount    String?
+  bankBranch     String?
+  remark         String?
+  roomId         Int?     // 关联房间
+  room           Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([roomId])
+}

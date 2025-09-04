@@ -1,0 +1,8 @@
+-- 手工添加 Building 与 Room 新增列
+ALTER TABLE "Building" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "Building" ADD COLUMN IF NOT EXISTS "buildingType" TEXT;
+ALTER TABLE "Building" ADD COLUMN IF NOT EXISTS "buildingStructure" TEXT;
+ALTER TABLE "Building" ADD COLUMN IF NOT EXISTS "orientation" TEXT;
+ALTER TABLE "Building" ADD COLUMN IF NOT EXISTS "remark" TEXT;
+
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "remark" TEXT;

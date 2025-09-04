@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "statusCode": 200,
+  "headers": {
+    "x-powered-by": "Express",
+    "access-control-allow-origin": "*",
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "69",
+    "etag": "W/\"45-4622bOZqTNKpFPdRIvL/MI1LmUI\"",
+    "date": "Thu, 04 Sep 2025 13:59:25 GMT",
+    "connection": "keep-alive",
+    "keep-alive": "timeout=5"
+  },
+  "body": {
+    "status": "ok",
+    "ts": "2025-09-04T13:59:25.098Z",
+    "pid": 548,
+    "port": 4000
+  },
+  "ts": "2025-09-04T13:59:25.106Z"
+}

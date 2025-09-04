@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: property_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: property
+      POSTGRES_PASSWORD: property123
+      POSTGRES_DB: property
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  backend:
+    build: ./backend
+    container_name: property_backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://property:property123@db:5432/property
+      PRISMA_INIT_RETRIES: 20
+      PRISMA_INIT_DELAY: 2000
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    command: sh -c "npx prisma migrate deploy && node node_modules/ts-node-dev/bin/ts-node-dev.js --exit-child --transpile-only src/index.ts"
+  seed:
+    build: ./backend
+    depends_on:
+      - backend
+    environment:
+      DATABASE_URL: postgres://property:property123@db:5432/property
+    command: sh -c "node -e 'setTimeout(async()=>{const {PrismaClient}=require(\"@prisma/client\");const p=new PrismaClient();if(await p.area.count()==0){console.log(\"running seed...\");require(\"./prisma/seed.js\");}else{console.log(\"seed skip - data exists\");} },3000)'"
+volumes:
+  pg_data:

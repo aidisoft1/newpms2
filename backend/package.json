@@ -1,0 +1,31 @@
+{
+  "name": "property-backend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --exit-child --transpile-only src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "prod": "npm run build && node dist/index.js",
+    "check:db": "node scripts/prismaCheck.js",
+    "dev:check": "npm run check:db && ts-node-dev --exit-child --transpile-only src/index.ts",
+  "selftest": "node -e \"(async()=>{const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();console.log('area.count',await p.area.count());await p.$disconnect();})()\"",
+  "seed": "ts-node --transpile-only prisma/seed.ts",
+  "db:reset": "npx prisma migrate deploy && npm run seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "prisma": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.0.0",
+    "ts-node-dev": "^2.0.0",
+  "ts-node": "^10.9.2",
+    "typescript": "^5.0.4"
+  }
+}

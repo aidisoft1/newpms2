@@ -1,0 +1,646 @@
+<template>
+  <a-layout style="height:100vh">
+  <a-layout-sider v-if="!isFullscreen" :collapsed="collapsed" collapsible :collapsedWidth="64" width="240" :class="{collapsed: collapsed}" style="background:#fff; border-right:1px solid #eee" :trigger="null">
+      <div style="height:64px; display:flex; align-items:center; justify-content:center">
+        <div class="brand" :class="{collapsed: collapsed}">
+          <div v-if="!collapsed" class="brand-lines">
+            <span class="brand-title">Aidisoft</span>
+            <span class="brand-sub">艾迪物业软件</span>
+          </div>
+          <div v-else class="brand-collapsed">Aid</div>
+        </div>
+      </div>
+      <a-menu
+        mode="inline"
+        theme="light"
+        :selected-keys="[activeKey]"
+        style="height:calc(100% - 64px); overflow:auto; background:transparent"
+      >
+        <template v-for="item in menuItems">
+          <a-sub-menu v-if="item.children" :key="`submenu-${item.key}`">
+            <template #title>
+              <component :is="getIcon(item).comp" class="menu-icon" :style="{ color: getIcon(item).color }" />
+              <span class="menu-label">{{ item.label }}</span>
+            </template>
+            <template v-for="child in item.children">
+              <a-sub-menu v-if="child.children" :key="`submenu-${child.key}`">
+                <template #title>
+                  <component :is="getIcon(child).comp" class="menu-icon" :style="{ color: getIcon(child).color }" />
+                  <span class="menu-label">{{ child.label }}</span>
+                </template>
+                <a-menu-item v-for="sub in child.children" :key="`sub-${sub.key}`" @click="onMenuClick(sub)">
+                  <component :is="getIcon(sub).comp" class="menu-icon" :style="{ color: getIcon(sub).color }" />
+                  <span class="menu-label">{{ sub.label }}</span>
+                </a-menu-item>
+              </a-sub-menu>
+
+              <a-menu-item v-else :key="`item-${child.key}`" @click="onMenuClick(child)">
+                <component :is="getIcon(child).comp" class="menu-icon" :style="{ color: getIcon(child).color }" />
+                <span class="menu-label">{{ child.label }}</span>
+              </a-menu-item>
+            </template>
+          </a-sub-menu>
+
+          <a-menu-item v-else :key="`item-${item.key}`" @click="onMenuClick(item)">
+            <component :is="getIcon(item).comp" class="menu-icon" :style="{ color: getIcon(item).color }" />
+            <span class="menu-label">{{ item.label }}</span>
+          </a-menu-item>
+        </template>
+      </a-menu>
+    </a-layout-sider>
+
+  <a-layout>
+    <a-layout-header v-if="!isFullscreen" style="background:#fff; padding:0 16px">
+          <div style="height:64px; display:flex; align-items:center; justify-content:space-between">
+              <div style="display:flex; align-items:center">
+                <div class="collapse-btn" @click="toggleCollapse" role="button" tabindex="0">
+                  <span class="collapse-line" aria-hidden="true"></span>
+                  <span class="collapse-caption">{{ collapsed ? '展开' : '收起' }}</span>
+                </div>
+                <span style="font-weight:600; margin-left:8px">欢迎</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px">
+                <UrgentRemindersPopover />
+                <a-button type="text" @click="toggleFullscreen" style="padding:4px 8px">
+                  <component :is="isFullscreen ? 'FullscreenExitOutlined' : 'FullscreenOutlined'" />
+                </a-button>
+                <UserMenu />
+              </div>
+          </div>
+        </a-layout-header>
+
+        
+
+      <a-layout-content :style="{ margin: isFullscreen ? '0' : '16px' }">
+        <div style="background:#fff; padding:12px; position:relative;" :style="{ minHeight: isFullscreen ? '100vh' : 'calc(100vh - 128px)' }">
+          <!-- 非全屏时提供浮动放大按钮，便于把当前分页标签内容切换到全屏 -->
+          <div v-if="!isFullscreen" class="content-expand">
+            <a-button type="text" @click="toggleFullscreen" title="放大当前页">
+              <component :is="'FullscreenOutlined'" />
+            </a-button>
+          </div>
+
+          <a-tabs v-if="!isFullscreen" type="editable-card" v-model:activeKey="activeKey" @edit="onEdit">
+            <a-tab-pane v-for="tab in tabs" :key="tab.key" :tab="tab.title">
+              <component :is="getTabComponent(tab)" />
+            </a-tab-pane>
+          </a-tabs>
+          <div v-else class="fullscreen-wrapper">
+            <keep-alive>
+              <component v-if="fullscreenTarget" :is="fullscreenTarget" />
+              <template v-else>
+                <router-view v-slot="{ Component }">
+                  <keep-alive>
+                    <component :is="Component || activeComponent" />
+                  </keep-alive>
+                </router-view>
+              </template>
+            </keep-alive>
+          </div>
+          <div v-if="isFullscreen" class="fullscreen-exit">
+            <a-button type="text" @click="toggleFullscreen">
+              <component :is="'FullscreenExitOutlined'" />
+            </a-button>
+          </div>
+        </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
+</template>
+
+<style scoped>
+/* 覆盖 antd menu 选中高亮条为白色无边框 */
+::v-deep .ant-menu-light .ant-menu-item-selected,
+::v-deep .ant-menu-light .ant-menu-submenu-selected {
+  background: #fff !important;
+  border-right: none !important;
+  color: #1677ff !important; /* 选中字体色可自定 */
+}
+::v-deep .ant-menu-light .ant-menu-item-active {
+  background: #f5f5f5 !important;
+}
+::v-deep .ant-menu-light .ant-menu-item::after {
+  border-right: none !important;
+}
+/* Make tabs underline a subtle light-gray divider to better match app theme */
+::v-deep .ant-tabs-nav::after {
+  content: "" !important;
+  display: block !important;
+  height: 1px !important;
+  background: #f0f0f0 !important; /* very light gray */
+  bottom: 0 !important;
+}
+::v-deep .ant-tabs-ink-bar {
+  background: #e8e8e8 !important; /* light gray ink bar */
+  box-shadow: none !important;
+  height: 2px !important;
+  transition: background .18s, left .18s, width .18s;
+}
+/* keep active tab color subtle */
+::v-deep .ant-tabs-tab-active {
+  color: inherit !important;
+}
+</style>
+
+<script lang="ts">
+import { defineComponent, ref, defineAsyncComponent, type Component, computed, provide, onMounted, watch, shallowRef, unref } from 'vue'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { HomeOutlined, AppstoreOutlined, UserOutlined, MoneyCollectOutlined, SettingOutlined, ToolOutlined, TeamOutlined, BarChartOutlined, WechatOutlined, DatabaseOutlined, ApartmentOutlined, FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons-vue'
+import DashboardView from '../views/Dashboard.vue'
+import PlaceholderView from '../views/Placeholder.vue'
+import UserMenu from './UserMenu.vue'
+import UrgentReminders from './UrgentReminders.vue'
+import UrgentRemindersPopover from './UrgentRemindersPopover.vue'
+import TodoPanel from './TodoPanel.vue'
+
+interface MenuItem {
+  key: string
+  label: string
+  children?: MenuItem[]
+  route?: string
+}
+
+interface Tab {
+  key: string
+  title: string
+  // store component as a shallowRef to avoid Vue making the component definition deeply reactive
+  component: any
+}
+
+export default defineComponent({
+  components: { UserMenu, UrgentRemindersPopover, TodoPanel, FullscreenOutlined, FullscreenExitOutlined },
+  setup() {
+  // hmr touch
+    const router = useRouter()
+    const collapsed = ref<boolean>(false)
+
+  const menuItems: MenuItem[] = [
+      { key: 'dashboard', label: '主控台' },
+      {
+        key: 'resources',
+        label: '物业资源',
+        children: [
+          { key: 'resources.managementArea', label: '管理区', route: '/resources/managementArea' },
+          { key: 'resources.building', label: '楼宇', route: '/resources/building' },
+          { key: 'resources.room', label: '房间信息', route: '/resources/room' }
+        ]
+      },
+      {
+        key: 'customers',
+        label: '客户管理',
+        children: [
+          { key: 'customers.info', label: '客户信息', route: '/customers/info' },
+          { key: 'customers.cert', label: '住户认证', route: '/customers/cert' },
+          { key: 'customers.analytics', label: '客户数据分析', route: '/customers/analytics' }
+        ]
+      },
+      {
+        key: 'finance',
+        label: '财务管理',
+        children: [
+              {
+                key: 'finance.charging',
+                label: '收费管理',
+                children: [
+                  { key: 'finance.charging.meterSettings', label: '房间仪表设置', route: '/finance/charging/meterSettings' },
+                  { key: 'finance.charging.periodFeeSettings', label: '周期费用设置', route: '/finance/charging/periodFeeSettings' },
+                  { key: 'finance.charging.readingsEntry', label: '抄表数据录入', route: '/finance/charging/readingsEntry' },
+                  { key: 'finance.charging.periodFeeEntry', label: '周期费用录入', route: '/finance/charging/periodicFeeEntry' },
+                  { key: 'finance.charging.temporaryFeeEntry', label: '临时费用录入', route: '/finance/charging/temporaryFeeEntry' },
+                  { key: 'finance.charging.prepaidDeduction', label: '预收抵扣' },
+                  { key: 'finance.charging.feeAdjust', label: '费用调整' },
+                  { key: 'finance.charging.notice', label: '收费通知单' },
+                  { key: 'finance.charging.collectFee', label: '费用收取' },
+                  { key: 'finance.charging.temporaryCollection', label: '临时收款' }
+                ]
+              },
+          {
+            key: 'finance.budget',
+            label: '预算管理',
+            children: [
+              { key: 'finance.budget.income', label: '收入预算' },
+              { key: 'finance.budget.expense', label: '支出预算' }
+            ]
+          },
+          {
+            key: 'finance.bankCollection',
+            label: '银行托收',
+            children: [
+              { key: 'finance.bankCollection.plan', label: '生成托收方案' },
+              { key: 'finance.bankCollection.report', label: '报盘' },
+              { key: 'finance.bankCollection.return', label: '回盘' },
+              { key: 'finance.bankCollection.list', label: '托收清单' }
+            ]
+          },
+          {
+            key: 'finance.cashier',
+            label: '出纳管理',
+            children: [
+              { key: 'finance.cashier.journal', label: '收支日记账' },
+              { key: 'finance.cashier.reports', label: '出纳报表' },
+              { key: 'finance.cashier.bankAccounts', label: '银行账号' }
+            ]
+          },
+          {
+            key: 'finance.reports',
+            label: '财务报表',
+            children: [
+              { key: 'finance.reports.feeReport', label: '费用报表' },
+              { key: 'finance.reports.collectionReport', label: '收款报表' },
+              { key: 'finance.reports.feeStats', label: '费用统计表' },
+              { key: 'finance.reports.collectionStats', label: '收款统计表' },
+              { key: 'finance.reports.feeCollection', label: '费用收款报表' }
+            ]
+          }
+        ]
+      },
+      {
+        key: 'service',
+        label: '客户服务',
+        children: [
+          { key: 'service.repair', label: '日常报修处理' },
+          { key: 'service.public', label: '公共服务咨询' },
+          { key: 'service.emergency', label: '紧急事件响应' }
+        ]
+      },
+      {
+        key: 'wechat',
+        label: '微信管理',
+        children: [
+          { key: 'wechat.main', label: '微信绑定' },
+          { key: 'wechat.bind', label: '微信推送' }
+        ]
+      },
+      {
+        key: 'leasing',
+        label: '招商租赁',
+        children: [
+          { key: 'leasing.contract', label: '合同录入' },
+          { key: 'leasing.fee', label: '合同费用生成' },
+          { key: 'leasing.terminate', label: '合同终止' }
+        ]
+      },
+      {
+        key: 'property',
+        label: '物业管理',
+        children: [
+          { key: 'property.meter', label: '房间仪表' },
+          { key: 'property.settings', label: '设置' },
+          { key: 'property.meterFee', label: '仪表费用设置' },
+          { key: 'property.readings', label: '抄表数据录入' }
+        ]
+      },
+      {
+        key: 'hr',
+        label: '人力资源',
+        children: [
+          { key: 'hr.staff', label: '员工信息' },
+          { key: 'hr.attendance', label: '员工考勤' },
+          { key: 'hr.performance', label: '绩效考核' }
+        ]
+      },
+      { key: 'datahub', label: '数据中台', children: [
+        { key: 'datahub.roomStatus', label: '房态数据' },
+        { key: 'datahub.feeStatus', label: '缴费数据' },
+        { key: 'datahub.analytics', label: '数据分析' }
+      ] },
+      {
+        key: 'system',
+        label: '系统管理',
+        children: [
+          { key: 'system.settings', label: '系统设置' },
+          { key: 'system.permissions', label: '权限设置' },
+          { key: 'system.sms', label: '短信平台' }
+        ]
+      },
+      {
+        key: 'app',
+        label: 'App管理',
+        children: [
+          { key: 'app.service', label: '客户服务' },
+          { key: 'app.finance', label: '财务管理' },
+          { key: 'app.iot', label: '智能设备' },
+          { key: 'app.leasing', label: '招商租赁' },
+          { key: 'app.operation', label: '设备运营' },
+          { key: 'app.inspection', label: '巡检管理' },
+          { key: 'app.staff', label: '员工管理系统设置' }
+        ]
+      }
+    ]
+
+    const tabs = ref<Tab[]>([
+      { key: 'dashboard', title: '主控台', component: shallowRef(DashboardView as any) },
+      { key: 'resources.room', title: '房间信息', component: shallowRef(defineAsyncComponent(() => import('../views/resources.room.vue'))) }
+    ])
+    const activeKey = ref<string>('resources.room')
+
+    function openTab(key: string, title: string, routePath?: string): void {
+      // normalize routePath to start-with /resources/... or /datahub/...
+      const normalized = routePath && routePath.startsWith('/') ? routePath.slice(1) : (routePath || '')
+  
+  if (!tabs.value.find((t: Tab) => t.key === key)) {
+  let comp: Component | any = PlaceholderView
+        // 特殊处理 ManagementArea，避免路径拼接错误
+        console.log('[openTab] normalized=', normalized)
+        if (normalized === 'resources/managementArea') {
+          comp = defineAsyncComponent(() => import('../views/ManagementArea.vue'))
+        } else if (normalized === 'resources/building') {
+          comp = defineAsyncComponent(() => import('../views/building.vue'))
+        } else if (normalized === 'resources/room') {
+          // resources.room.vue uses dot in filename, special-case to load it
+          comp = defineAsyncComponent(() => import('../views/resources.room.vue'))
+        } else if (normalized === 'datahub/roomStatus') {
+          comp = defineAsyncComponent(() => import('../views/datahub.roomStatus.vue'))
+        } else if (normalized === 'datahub/feeStatus') {
+          comp = defineAsyncComponent(() => import('../views/datahub.feeStatus.vue'))
+        } else if (normalized === 'finance/charging/readingsEntry') {
+          comp = defineAsyncComponent(() => import('../views/finance/charging/readingsEntry.vue'))
+        } else if (normalized === 'finance/charging/temporaryFeeEntry' || normalized === 'finance/charging/temporaryFeesEntry') {
+          comp = defineAsyncComponent(() => import('../views/finance/charging/temporaryFeesEntry.vue'))
+        } else if (normalized === 'finance/charging/periodicFeeEntry') {
+          comp = defineAsyncComponent(() => import('../views/finance/charging/periodicFeeEntry.vue'))
+        } else if (normalized === 'finance/charging/periodFeeSettings') {
+          comp = defineAsyncComponent(() => import('../views/finance/charging/periodicFees.vue'))
+        // customers 页面使用文件名中带点的命名（例如 customers.cert.vue），
+        // 当菜单 key 生成的 normalized 为 'customers/cert' 时需要特殊处理
+        } else if (normalized === 'customers/cert') {
+          comp = defineAsyncComponent(() => import('../views/customers.cert.vue'))
+        } else if (normalized === 'customers/info') {
+          comp = defineAsyncComponent(() => import('../views/customers.info.vue'))
+        } else if (normalized === 'customers/analytics') {
+          comp = defineAsyncComponent(() => import('../views/customers.analytics.vue'))
+        } else if (normalized) {
+          // 如果 normalized 中含有斜杠（例如 customers/cert），尝试把斜杠换为点（customers.cert）再导入
+          if (normalized.includes('/')) {
+              // try folder-style path first (e.g. finance/charging/meterSettings -> ../views/finance/charging/meterSettings.vue)
+              const folderPath = normalized
+              try {
+                comp = defineAsyncComponent(() => import(/* @vite-ignore */ `../views/${folderPath}.vue`))
+              } catch (e) {
+                // fallback to dot notation (finance.charging.meterSettings)
+                const dotPath = normalized.replace(/\//g, '.')
+                comp = defineAsyncComponent(() => import(/* @vite-ignore */ `../views/${dotPath}.vue`))
+              }
+            } else {
+              comp = defineAsyncComponent(() => import(/* @vite-ignore */ `../views/${normalized}.vue`))
+            }
+        }
+  // store as shallowRef to avoid deep reactive conversion
+  tabs.value.push({ key, title, component: shallowRef(comp) })
+      }
+      activeKey.value = key
+    }
+
+  function onMenuClick(item: MenuItem): void {
+      // 如果菜单项配置了 route，则同步到该路由并打开标签页显示内容
+  if (item.route) {
+        // 保持 URL 同步
+        router.push(item.route).catch(() => {})
+        // 同时以标签页方式打开组件（openTab 内会根据 routePath 加载正确的组件）
+        openTab(item.key, item.label, item.route)
+        return
+      }
+      const routePath = item.key.replace(/\./g, '/')
+      openTab(item.key, item.label, routePath)
+    }
+
+    function toggleCollapse(): void {
+      collapsed.value = !collapsed.value
+    }
+
+    function getIcon(item: MenuItem): { comp: any; color: string } {
+      const map: Record<string, any> = {
+        // top-level
+        dashboard: { comp: 'HomeOutlined', color: '#2f54eb' },
+        resources: { comp: 'DatabaseOutlined', color: '#13c2c2' },
+        customers: { comp: 'UserOutlined', color: '#722ed1' },
+  finance: { comp: 'MoneyCollectOutlined', color: '#52c41a' },
+  'finance.budget': { comp: 'PieChartOutlined', color: '#fa8c16' },
+  'finance.bankCollection': { comp: 'BankOutlined', color: '#096dd9' },
+  'finance.cashier': { comp: 'WalletOutlined', color: '#52c41a' },
+  'finance.reports': { comp: 'BarChartOutlined', color: '#722ed1' },
+        service: { comp: 'ToolOutlined', color: '#fa8c16' },
+        wechat: { comp: 'WechatOutlined', color: '#09bb07' },
+        leasing: { comp: 'AppstoreOutlined', color: '#ff7a00' },
+        property: { comp: 'SettingOutlined', color: '#1890ff' },
+        hr: { comp: 'TeamOutlined', color: '#722ed1' },
+        datahub: { comp: 'BarChartOutlined', color: '#13c2c2' },
+        system: { comp: 'SettingOutlined', color: '#fa541c' },
+        app: { comp: 'AppstoreOutlined', color: '#9254de' },
+
+        // resources children
+  'resources.manage': { comp: 'ApartmentOutlined', color: '#1e9fff' },
+  'resources.managementArea': { comp: 'DatabaseOutlined', color: '#1e9fff' },
+  'resources.building': { comp: 'ApartmentOutlined', color: '#1e9fff' },
+        'resources.room': { comp: 'ShopOutlined', color: '#00a87e' },
+
+        // customers
+        'customers.info': { comp: 'UserOutlined', color: '#722ed1' },
+        'customers.cert': { comp: 'ReadOutlined', color: '#f56a79' },
+        'customers.analytics': { comp: 'BarChartOutlined', color: '#13c2c2' },
+
+        // finance deeper
+        'finance.charging': { comp: 'WalletOutlined', color: '#52c41a' },
+        'finance.charging.meterSettings': { comp: 'DashboardOutlined', color: '#fa8c16' },
+        'finance.charging.periodFeeSettings': { comp: 'CalendarOutlined', color: '#9254de' },
+        'finance.charging.readingsEntry': { comp: 'ReadOutlined', color: '#ff7a00' },
+        'finance.charging.periodFeeEntry': { comp: 'FileTextOutlined', color: '#2f54eb' },
+        'finance.charging.temporaryFeeEntry': { comp: 'FileTextOutlined', color: '#1890ff' },
+        'finance.charging.prepaidDeduction': { comp: 'PayCircleOutlined', color: '#13c2c2' },
+        'finance.charging.feeAdjust': { comp: 'WalletOutlined', color: '#52c41a' },
+        'finance.charging.notice': { comp: 'FileTextOutlined', color: '#fa541c' },
+        'finance.charging.collectFee': { comp: 'BankOutlined', color: '#096dd9' },
+        'finance.charging.temporaryCollection': { comp: 'PayCircleOutlined', color: '#fa8c16' },
+
+        'finance.budget.income': { comp: 'WalletOutlined', color: '#52c41a' },
+        'finance.budget.expense': { comp: 'FileTextOutlined', color: '#f56a79' },
+
+        'finance.bankCollection.plan': { comp: 'FileTextOutlined', color: '#1890ff' },
+        'finance.bankCollection.report': { comp: 'FileTextOutlined', color: '#2f54eb' },
+        'finance.bankCollection.return': { comp: 'FileTextOutlined', color: '#9254de' },
+        'finance.bankCollection.list': { comp: 'BankOutlined', color: '#096dd9' },
+
+        'finance.cashier.journal': { comp: 'FileTextOutlined', color: '#fa541c' },
+        'finance.cashier.reports': { comp: 'BarChartOutlined', color: '#13c2c2' },
+        'finance.cashier.bankAccounts': { comp: 'BankOutlined', color: '#096dd9' },
+
+  'finance.reports.feeReport': { comp: 'BarChartOutlined', color: '#13c2c2' },
+  'finance.reports.collectionReport': { comp: 'PieChartOutlined', color: '#2f54eb' },
+  'finance.reports.feeStats': { comp: 'FileTextOutlined', color: '#9254de' },
+  'finance.reports.collectionStats': { comp: 'WalletOutlined', color: '#52c41a' },
+  'finance.reports.feeCollection': { comp: 'PayCircleOutlined', color: '#fa8c16' },
+
+        // service
+        'service.repair': { comp: 'ToolOutlined', color: '#fa8c16' },
+        'service.public': { comp: 'CustomerServiceOutlined', color: '#08979c' },
+        'service.emergency': { comp: 'ExclamationCircleOutlined', color: '#ff4d4f' },
+
+        // wechat
+  'wechat.main': { comp: 'LinkOutlined', color: '#1890ff' },
+  'wechat.bind': { comp: 'BellOutlined', color: '#fa8c16' },
+
+        // leasing
+        'leasing.contract': { comp: 'FileTextOutlined', color: '#2f54eb' },
+        'leasing.fee': { comp: 'WalletOutlined', color: '#52c41a' },
+        'leasing.terminate': { comp: 'LockOutlined', color: '#ff7a00' },
+
+        // property
+        'property.meter': { comp: 'DashboardOutlined', color: '#fa8c16' },
+        'property.settings': { comp: 'SettingOutlined', color: '#1890ff' },
+        'property.meterFee': { comp: 'WalletOutlined', color: '#52c41a' },
+        'property.readings': { comp: 'ReadOutlined', color: '#ff7a00' },
+
+        // hr
+        'hr.staff': { comp: 'TeamOutlined', color: '#722ed1' },
+        'hr.attendance': { comp: 'CalendarOutlined', color: '#1890ff' },
+        'hr.performance': { comp: 'BarChartOutlined', color: '#13c2c2' },
+
+        // datahub
+        'datahub.analytics': { comp: 'BarChartOutlined', color: '#13c2c2' },
+
+        // system
+        'system.settings': { comp: 'SettingOutlined', color: '#fa541c' },
+        'system.permissions': { comp: 'LockOutlined', color: '#ff4d4f' },
+        'system.sms': { comp: 'FileTextOutlined', color: '#2f54eb' },
+
+        // app
+        'app.service': { comp: 'CustomerServiceOutlined', color: '#08979c' },
+        'app.finance': { comp: 'WalletOutlined', color: '#52c41a' },
+        'app.iot': { comp: 'DashboardOutlined', color: '#fa8c16' },
+        'app.leasing': { comp: 'FileTextOutlined', color: '#2f54eb' },
+        'app.operation': { comp: 'ToolOutlined', color: '#fa8c16' },
+        'app.inspection': { comp: 'ReadOutlined', color: '#ff7a00' },
+        'app.staff': { comp: 'TeamOutlined', color: '#722ed1' }
+      }
+      const fullKey = item.key || ''
+      if (map[fullKey]) return map[fullKey]
+      const key = fullKey.split('.')[0]
+      return map[key] || { comp: 'AppstoreOutlined', color: '#999' }
+    }
+
+    function onEdit(targetKey: string, action: string): void {
+      if (action === 'remove') {
+        const idx = tabs.value.findIndex((t: Tab) => t.key === targetKey)
+        if (idx >= 0) tabs.value.splice(idx, 1)
+        if (activeKey.value === targetKey) activeKey.value = tabs.value[0]?.key || ''
+      }
+    }
+
+    // helper: find menu item by route recursively
+    function findByRoute(items: any[], routePath: string): any | null {
+      for (const it of items) {
+        if (it.route === routePath) return it
+        if (it.children) {
+          const r = findByRoute(it.children, routePath)
+          if (r) return r
+        }
+      }
+      return null
+    }
+
+    // If user navigates directly to a route (e.g. /finance/charging/meterSettings),
+    // ensure the corresponding tab is opened on mount so the page is visible inside the tab UI.
+    onMounted(() => {
+      try {
+        const path = router.currentRoute.value.path || ''
+        if (!path || path === '/') return
+        const matched = findByRoute(menuItems, path)
+        if (matched) {
+          // open the tab for the matched menu item and keep URL in sync
+          openTab(matched.key, matched.label, matched.route)
+        }
+      } catch (e) {
+        // ignore failures here; this is a convenience feature
+      }
+    })
+
+    // Keep tabs in sync when the route changes (covers direct URL navigation and router.push)
+    watch(() => router.currentRoute.value.path, (path) => {
+      try {
+        if (!path || path === '/') return
+        const matched = findByRoute(menuItems, path)
+        if (matched) openTab(matched.key, matched.label, matched.route)
+      } catch (e) { /* ignore */ }
+    })
+
+    // 全屏模式控制（默认 false）
+    const isFullscreen = ref(false)
+
+    const fullscreenTarget = ref<Component | null>(null)
+
+    function toggleFullscreen(): void {
+      if (isFullscreen.value) {
+        fullscreenTarget.value = null
+        isFullscreen.value = false
+      } else {
+        fullscreenTarget.value = null
+        isFullscreen.value = true
+      }
+    }
+
+    function requestTabFullscreen(component: Component | null = null): void {
+      fullscreenTarget.value = component || activeComponent.value
+      isFullscreen.value = true
+    }
+
+  // 通过 provide 暴露给子组件调用，使分页标签内页面也能请求全屏（优先渲染标签页组件）
+  provide('toggleFullscreen', toggleFullscreen)
+  provide('requestTabFullscreen', requestTabFullscreen)
+
+    // 当前激活组件（用于全屏渲染）
+    const activeComponent = computed(() => {
+      const tab = tabs.value.find(t => t.key === activeKey.value)
+      const compRef = tab ? tab.component : shallowRef(PlaceholderView)
+      return unref(compRef)
+    })
+
+    // helper used by template to get non-reactive component definitions from a tab
+    function getTabComponent(tab: Tab) {
+      return unref(tab.component)
+    }
+
+  return { collapsed, menuItems, tabs, activeKey, onMenuClick, onEdit, toggleCollapse, getIcon, UserMenu, isFullscreen, toggleFullscreen, activeComponent, fullscreenTarget, requestTabFullscreen, getTabComponent }
+  }
+})
+</script>
+
+<style scoped>
+.menu-icon { width: 24px; display:inline-block; text-align:center; margin-right:8px }
+.menu-label { display:inline-block }
+.ant-layout-sider.collapsed .menu-label { display:none }
+
+.collapse-btn { display:inline-flex; align-items:center; cursor:pointer; padding:4px 8px; border-radius:12px }
+.collapse-line { display:inline-block; width:36px; height:6px; border-radius:6px; background: linear-gradient(90deg,#f56a79,#ffc857); margin-right:8px }
+.collapse-caption { font-size:12px; color:#333 }
+.menu-icon svg { width:16px; height:16px }
+
+@font-face {
+  font-family: 'Product Sans';
+  src: url('/src/assets/fonts/ProductSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.brand { color: #333; text-align: center; }
+.brand-lines { display:flex; flex-direction:column; align-items:center; transform: translateY(-4px); }
+.brand-title { font-family: 'Product Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; font-size:16px; font-weight:600; color:#333; line-height:1 }
+.brand-sub { font-family: 'Product Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; font-size:11px; color:#666; margin-top:2px }
+.brand-collapsed { font-family: 'Product Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; font-size:14px; color:#333 }
+
+@font-face {
+  font-family: 'Product Sans';
+  src: url('../assets/fonts/ProductSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+.brand {
+  font-family: 'Product Sans', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+}
+
+.fullscreen-wrapper { height: 100vh; padding: 0; margin: 0; }
+.fullscreen-exit { position: fixed; top: 12px; right: 12px; z-index: 1200; }
+.content-expand { position: absolute; right: 12px; bottom: 12px; z-index: 1000; }
+</style>
