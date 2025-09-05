@@ -129,3 +129,51 @@ npm run dev
 - 开发环境就绪 ✅
 
 可以开始愉快地开发了！🚀
+
+---
+
+## 📤 上传项目到 GitHub
+
+### 🚀 一键上传脚本
+```bash
+# 运行自动上传脚本
+.\upload-to-github.bat
+```
+
+### 📋 手动上传步骤
+
+#### 1. 检查文件状态
+```bash
+git status
+git add .
+git commit -m "feat: PostgreSQL 数据库迁移完成"
+```
+
+#### 2. 在 GitHub 创建仓库
+- 访问 https://github.com
+- 点击 "New repository"
+- 仓库名：`newpms2`
+- 描述：`物业管理系统 - PostgreSQL版本`
+- **不要**勾选 "Initialize with README"
+
+#### 3. 连接并推送
+```bash
+# 替换 YOUR_USERNAME 为你的 GitHub 用户名
+git remote add origin https://github.com/YOUR_USERNAME/newpms2.git
+git branch -M main
+git push -u origin main
+```
+
+### 📚 详细说明
+查看完整的上传指南：`GITHUB_UPLOAD_GUIDE.md`
+
+### ⚠️ 重要提醒
+- ✅ `.env` 文件已在 .gitignore 中，不会上传敏感信息
+- ✅ `node_modules` 已被忽略
+- ✅ 提供了 `.env.example` 作为配置示例
+
+### 🎯 上传后的好处
+- 📁 代码备份和版本控制
+- 👥 团队协作开发
+- 🔄 自动化部署（可选）
+- 📊 项目展示和分享
