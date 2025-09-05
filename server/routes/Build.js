@@ -8,6 +8,7 @@ const { Op } = require('sequelize');
 router.get('/', async (req, res) => {
   try {
     const where = {};
+<<<<<<< HEAD
     if (req.query.BuildName) {
       where.BuildName = { [Op.like]: `%${req.query.BuildName}%` };
     }
@@ -16,6 +17,16 @@ router.get('/', async (req, res) => {
     }
     if (req.query.Note) {
       where.Note = { [Op.like]: `%${req.query.Note}%` };
+=======
+    if (req.query.name) {
+      where.name = { [Op.like]: `%${req.query.name}%` };
+    }
+    if (req.query.gardenId) {
+      where.gardenId = req.query.gardenId;
+    }
+    if (req.query.address) {
+      where.address = { [Op.like]: `%${req.query.address}%` };
+>>>>>>> 1505a9fb516a576df36bde8a01a9c11454e56bb3
     }
     const Builds = await Build.findAll({ where });
     res.json(Builds);
