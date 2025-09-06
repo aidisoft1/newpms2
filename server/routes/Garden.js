@@ -57,7 +57,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   log('DELETE /' + req.params.id);
   try {
-    await Garden.destroy({ where: { Id: req.params.id } });
+    await Garden.destroy({ where: { id: req.params.id } });
     log('delete success');
     res.json({ success: true });
   } catch (err) {

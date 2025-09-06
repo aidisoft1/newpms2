@@ -4,7 +4,7 @@ const { Client } = require('pg');
 
 // 从环境变量或使用默认值
 const config = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || '192.168.1.10',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'postgres', // 先连接默认数据库
   user: process.env.DB_USER || 'postgres',

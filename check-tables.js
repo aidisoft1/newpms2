@@ -4,7 +4,7 @@ const { Client } = require('pg');
 
 async function checkTables() {
   const client = new Client({
-    host: 'localhost',
+    host: '192.168.1.10',
     port: 5432,
     database: 'sample',
     user: 'postgres',

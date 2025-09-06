@@ -3,7 +3,7 @@ console.log('开始PostgreSQL连接测试...');
 
 // 手动设置配置
 const config = {
-  host: 'localhost',
+  host: '192.168.1.10',
   port: 5432,
   database: 'sample',
   user: 'postgres',

@@ -51,6 +51,7 @@
         <a-table
           :columns="tableColumns"
           :data-source="tableData"
+          :loading="loading"
           row-key="areaId"
           bordered
           :scroll="{ x: 1200, y: 420 }"
@@ -158,17 +159,207 @@
 
 <script setup lang="ts">
 import { ref, h, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import axios from 'axios';
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 dayjs.locale('zh-cn')
 import { FullscreenOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 
+// 配置axios
+axios.defaults.baseURL = 'http://192.168.1.10:3000';
+axios.defaults.headers.common['Authorization'] = 'mock-token';
+axios.defaults.headers.post['Content-Type'] = 'application/json';
+
 // 管理区数据
-const allAreas = ref([
-  { areaId: 'A1', name: '管理区A', lowBuildingCount: 2, highBuildingCount: 1, buildArea: 10000, landArea: 8000, publicArea: 2000, greenArea: 1000, roadArea: 500, parkingArea: 300, garageArea: 200, remark: '' },
-  { areaId: 'B1', name: '管理区B', lowBuildingCount: 1, highBuildingCount: 2, buildArea: 12000, landArea: 9000, publicArea: 2500, greenArea: 1200, roadArea: 600, parkingArea: 350, garageArea: 250, remark: '' }
-]);
+const allAreas = ref<any[]>([]);
+const loading = ref(false);
+
+// API 调用函数
+async function fetchAreas() {
+  try {
+    loading.value = true;
+    console.log('正在获取管理区数据...');
+    
+    const response = await axios.get('/api/gardens');
+    console.log('API 响应:', response.data);
+    
+    // 检查响应数据类型
+    if (!response.data) {
+      console.warn('API 返回空数据');
+      allAreas.value = [];
+      tableData.value = [];
+      buildTree();
+      return;
+    }
+    
+    // 如果返回的是错误对象而不是数组
+    if (response.data.error) {
+      throw new Error(response.data.error);
+    }
+    
+    // 确保返回的是数组
+    const dataArray = Array.isArray(response.data) ? response.data : [];
+    console.log('处理后的数据数组:', dataArray);
+    
+    // 将后端数据映射到前端格式
+    allAreas.value = dataArray.map((item: any) => ({
+      areaId: item.area_id || item.id || `temp_${Date.now()}_${Math.random()}`,
+      id: item.id, // 保存数据库ID用于更新和删除
+      name: item.name || '未命名管理区',
+      address: item.address || '',
+      description: item.description || '',
+      lowBuildingCount: item.low_building_count || 0,
+      highBuildingCount: item.high_building_count || 0,
+      buildArea: item.build_area || 0,
+      landArea: item.land_area || 0,
+      publicArea: item.public_area || 0,
+      greenArea: item.green_area || 0,
+      roadArea: item.road_area || 0,
+      parkingArea: item.parking_area || 0,
+      garageArea: item.garage_area || 0,
+      remark: item.description || ''
+    }));
+    
+    tableData.value = [...allAreas.value];
+    buildTree();
+    console.log('管理区数据加载完成:', allAreas.value);
+    
+    if (allAreas.value.length === 0) {
+      message.info('当前没有管理区数据，可以点击"新增管理区"添加数据');
+    }
+    
+  } catch (error: any) {
+    console.error('获取管理区数据失败:', error);
+    
+    // 更详细的错误处理
+    let errorMessage = '获取管理区数据失败';
+    if (error.response) {
+      // 服务器返回了错误响应
+      console.error('响应状态:', error.response.status);
+      console.error('响应数据:', error.response.data);
+      
+      if (error.response.status === 404) {
+        errorMessage = 'API 路径不存在，请检查后端服务';
+      } else if (error.response.status === 500) {
+        errorMessage = '服务器内部错误: ' + (error.response.data?.error || '数据库连接问题');
+      } else {
+        errorMessage = error.response.data?.error || `HTTP ${error.response.status} 错误`;
+      }
+    } else if (error.request) {
+      // 请求发出但没有收到响应
+      console.error('请求对象:', error.request);
+      errorMessage = '无法连接到后端服务，请检查服务是否启动';
+    } else {
+      // 其他错误
+      errorMessage = error.message;
+    }
+    
+    message.error(errorMessage);
+    
+    // 使用默认数据避免页面崩溃
+    allAreas.value = [
+      { 
+        areaId: 'demo_1', 
+        id: null,
+        name: '示例管理区', 
+        address: '示例地址', 
+        description: '这是示例数据，请检查后端服务连接', 
+        lowBuildingCount: 0, 
+        highBuildingCount: 0, 
+        buildArea: 0, 
+        landArea: 0, 
+        publicArea: 0, 
+        greenArea: 0, 
+        roadArea: 0, 
+        parkingArea: 0, 
+        garageArea: 0, 
+        remark: '示例数据' 
+      }
+    ];
+    tableData.value = [...allAreas.value];
+    buildTree();
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function saveArea(areaData: any) {
+  try {
+    loading.value = true;
+    console.log('正在保存管理区数据:', areaData);
+    
+    // 将前端数据映射到后端格式
+    const apiData = {
+      name: areaData.name,
+      area_id: areaData.areaId,
+      address: areaData.address || '未填写地址',
+      description: areaData.remark || areaData.description || '',
+      low_building_count: areaData.lowBuildingCount || 0,
+      high_building_count: areaData.highBuildingCount || 0,
+      build_area: areaData.buildArea || 0,
+      land_area: areaData.landArea || 0,
+      public_area: areaData.publicArea || 0,
+      green_area: areaData.greenArea || 0,
+      road_area: areaData.roadArea || 0,
+      parking_area: areaData.parkingArea || 0,
+      garage_area: areaData.garageArea || 0
+    };
+    
+    let response;
+    if (areaData.id) {
+      // 更新现有记录
+      response = await axios.put(`/api/gardens/${areaData.id}`, apiData);
+      message.success('管理区更新成功');
+    } else {
+      // 创建新记录
+      response = await axios.post('/api/gardens', apiData);
+      console.log('创建响应:', response.data);
+      message.success('管理区创建成功');
+    }
+    
+    // 重新获取数据
+    await fetchAreas();
+    return response.data;
+  } catch (error: any) {
+    console.error('保存管理区失败:', error);
+    message.error('保存管理区失败: ' + (error.response?.data?.error || error.message));
+    throw error;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteArea(areaId: any) {
+  try {
+    loading.value = true;
+    console.log('正在删除管理区:', areaId);
+    
+    // 查找对应的数据库记录ID
+    const area = allAreas.value.find(a => a.areaId === areaId);
+    if (area && area.id) {
+      await axios.delete(`/api/gardens/${area.id}`);
+      message.success('删除成功');
+    } else {
+      console.warn('未找到对应的数据库记录ID，只从本地删除');
+      message.success('删除成功');
+    }
+    
+    // 重新获取数据以确保同步
+    await fetchAreas();
+  } catch (error: any) {
+    console.error('删除管理区失败:', error);
+    let errorMessage = '删除失败';
+    if (error.response?.data?.error) {
+      errorMessage += ': ' + error.response.data.error;
+    } else if (error.message) {
+      errorMessage += ': ' + error.message;
+    }
+    message.error(errorMessage);
+  } finally {
+    loading.value = false;
+  }
+}
 
 // 树相关
 const treeData = ref<any[]>([]);
@@ -200,7 +391,11 @@ function onMouseMove(e: MouseEvent) {
   sidebarWidth.value = newWidth;
 }
 function onMouseUp() { dragging.value = false; }
-onMounted(() => { window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); });
+onMounted(() => { 
+  window.addEventListener('mousemove', onMouseMove); 
+  window.addEventListener('mouseup', onMouseUp); 
+  fetchAreas(); // 初始化时获取数据
+});
 onUnmounted(() => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); });
 
 function onTreeSearchInput(e: any) { treeSearch.value = e?.target?.value ?? (e || ''); }
@@ -334,40 +529,36 @@ const editForm = ref({ areaId: '', name: '', lowBuildingCount: '', highBuildingC
 function onAdd() { editForm.value = { areaId: '', name: '', lowBuildingCount: '', highBuildingCount: '', buildArea: '', landArea: '', publicArea: '', greenArea: '', roadArea: '', parkingArea: '', garageArea: '', remark: '' }; editModalVisible.value = true; }
 function onEdit(record: any) { editForm.value = { ...record }; editModalVisible.value = true; }
 function onDelete(record: any) {
-  allAreas.value = allAreas.value.filter(a => a.areaId !== record.areaId);
-  tableData.value = tableData.value.filter(a => a.areaId !== record.areaId);
-  buildTree();
-  message.success('删除成功');
+  deleteArea(record.areaId);
 }
 function handleEditCancel() { editModalVisible.value = false; }
-function handleEditOk() {
-  // 将表单中的数字字段转为 number 类型
-  const toNumber = (v: any) => v === '' ? 0 : Number(v);
-  const data = {
-    areaId: editForm.value.areaId,
-    name: editForm.value.name,
-    lowBuildingCount: toNumber(editForm.value.lowBuildingCount),
-    highBuildingCount: toNumber(editForm.value.highBuildingCount),
-    buildArea: toNumber(editForm.value.buildArea),
-    landArea: toNumber(editForm.value.landArea),
-    publicArea: toNumber(editForm.value.publicArea),
-    greenArea: toNumber(editForm.value.greenArea),
-    roadArea: toNumber(editForm.value.roadArea),
-    parkingArea: toNumber(editForm.value.parkingArea),
-    garageArea: toNumber(editForm.value.garageArea),
-    remark: editForm.value.remark
-  };
-  const idx = allAreas.value.findIndex(a => a.areaId === data.areaId);
-  if (idx !== -1) {
-    allAreas.value[idx] = { ...data };
-    message.success('编辑成功');
-  } else {
-    allAreas.value.push({ ...data });
-    message.success('新增成功');
+async function handleEditOk() {
+  try {
+    // 将表单中的数字字段转为 number 类型
+    const toNumber = (v: any) => v === '' ? 0 : Number(v);
+    const data = {
+      id: editForm.value.areaId ? allAreas.value.find(a => a.areaId === editForm.value.areaId)?.id : undefined,
+      areaId: editForm.value.areaId || `A${Date.now()}`,
+      name: editForm.value.name,
+      address: '管理区地址', // 可以添加地址字段到表单
+      description: editForm.value.remark,
+      lowBuildingCount: toNumber(editForm.value.lowBuildingCount),
+      highBuildingCount: toNumber(editForm.value.highBuildingCount),
+      buildArea: toNumber(editForm.value.buildArea),
+      landArea: toNumber(editForm.value.landArea),
+      publicArea: toNumber(editForm.value.publicArea),
+      greenArea: toNumber(editForm.value.greenArea),
+      roadArea: toNumber(editForm.value.roadArea),
+      parkingArea: toNumber(editForm.value.parkingArea),
+      garageArea: toNumber(editForm.value.garageArea),
+      remark: editForm.value.remark
+    };
+    
+    await saveArea(data);
+    editModalVisible.value = false;
+  } catch (error) {
+    console.error('保存失败:', error);
   }
-  tableData.value = [...allAreas.value];
-  buildTree();
-  editModalVisible.value = false;
 }
 
 // 管理区 modal 拖拽支持

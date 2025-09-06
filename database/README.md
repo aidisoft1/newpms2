@@ -24,7 +24,7 @@ docker exec -it newpms2-postgres psql -U postgres
 ### 方法1：使用psql命令行
 ```bash
 # 连接到PostgreSQL
-psql -U postgres -h localhost -p 5432
+psql -U postgres -h 192.168.1.10 -p 5432
 
 # 创建数据库
 CREATE DATABASE newpms2_dev;
@@ -48,7 +48,7 @@ node database/migrate.js --force
 
 ```env
 # 数据库配置
-DB_HOST=localhost
+DB_HOST=192.168.1.10
 DB_PORT=5432
 DB_NAME=newpms2_dev
 DB_USER=postgres
@@ -122,16 +122,16 @@ log_duration = on
 ### 备份
 ```bash
 # 备份单个数据库
-pg_dump -U postgres -h localhost newpms2_dev > backup.sql
+pg_dump -U postgres -h 192.168.1.10 newpms2_dev > backup.sql
 
 # 备份所有数据库
-pg_dumpall -U postgres -h localhost > all_backup.sql
+pg_dumpall -U postgres -h 192.168.1.10 > all_backup.sql
 ```
 
 ### 恢复
 ```bash
 # 恢复数据库
-psql -U postgres -h localhost newpms2_dev < backup.sql
+psql -U postgres -h 192.168.1.10 newpms2_dev < backup.sql
 ```
 
 ## 9. 故障排除

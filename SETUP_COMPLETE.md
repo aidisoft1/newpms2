@@ -38,13 +38,13 @@ npm start
 # 或
 node server.js
 ```
-服务将运行在: http://localhost:3000
+服务将运行在: http://192.168.1.10:3000
 
 ### 前端开发服务器
 ```bash
 npm run dev
 ```
-服务将运行在: http://localhost:5173
+服务将运行在: http://192.168.1.10:5173
 
 ## 📊 当前状态
 
@@ -70,18 +70,18 @@ npm run dev
    ```bash
    npm start
    ```
-   - 这将启动API服务在 http://localhost:3000
+   - 这将启动API服务在 http://192.168.1.10:3000
    - 检查控制台输出确认启动成功
 
 2. **启动前端开发服务器** (必需)  
    ```bash
    npm run dev
    ```
-   - 这将启动前端界面在 http://localhost:5173
+   - 这将启动前端界面在 http://192.168.1.10:5173
    - 浏览器会自动打开
 
 3. **验证系统运行** (建议)
-   - 访问 http://localhost:5173 查看前端界面
+   - 访问 http://192.168.1.10:5173 查看前端界面
    - 检查登录功能是否正常
    - 测试数据库连接是否稳定
 
@@ -106,15 +106,15 @@ npm run dev
 
 ### ✅ 服务状态：
 - 🟢 **PostgreSQL数据库**: 连接正常 ✅
-- 🟢 **后端API服务器**: 运行在 http://localhost:3000 ✅  
-- 🟢 **前端开发服务器**: 运行在 http://localhost:5173 ✅
+- 🟢 **后端API服务器**: 运行在 http://192.168.1.10:3000 ✅  
+- 🟢 **前端开发服务器**: 运行在 http://192.168.1.10:5173 ✅
 - 🟢 **数据库表结构**: 已初始化 ✅
 
 ### 🚀 可以访问的服务：
-- **前端界面**: http://localhost:5173
-- **后端API**: http://localhost:3000/api
-- **登录测试**: http://localhost:3000/api/login
-- **创建测试用户**: http://localhost:3000/api/create-test-user
+- **前端界面**: http://192.168.1.10:5173
+- **后端API**: http://192.168.1.10:3000/api
+- **登录测试**: http://192.168.1.10:3000/api/login
+- **创建测试用户**: http://192.168.1.10:3000/api/create-test-user
 
 ### 🧪 测试账号：
 - 用户名：`admin`

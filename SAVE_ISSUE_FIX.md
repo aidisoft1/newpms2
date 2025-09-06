@@ -63,7 +63,7 @@ npm run dev
 
 ### 1. 通过 API 测试
 ```bash
-curl -X POST http://localhost:3000/api/gardens \
+curl -X POST http://192.168.1.10:3000/api/gardens \
   -H "Content-Type: application/json" \
   -d '{
     "name": "测试管理区",

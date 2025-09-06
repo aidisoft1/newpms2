@@ -28,7 +28,7 @@ try {
 }
 
 const config = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || '192.168.1.10',
   port: parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME || 'sample',
   user: process.env.DB_USER || 'postgres',

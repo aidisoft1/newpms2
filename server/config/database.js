@@ -7,7 +7,7 @@ const config = {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME || 'newpms2_dev',
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '192.168.1.10',
     port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
     logging: console.log, // 开发环境显示SQL日志

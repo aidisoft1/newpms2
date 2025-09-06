@@ -18,6 +18,14 @@
 			"command": "npm run dev",
 			"isBackground": true,
 			"group": "build"
+		},
+		{
+			"label": "start-backend",
+			"type": "shell",
+			"command": "node",
+			"args": ["server.js"],
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

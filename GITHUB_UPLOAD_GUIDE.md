@@ -114,7 +114,7 @@ git push origin main
 # 创建环境变量示例文件
 echo "# PostgreSQL数据库配置
 NODE_ENV=development
-DB_HOST=localhost
+DB_HOST=192.168.1.10
 DB_PORT=5432
 DB_NAME=your_database_name
 DB_USER=your_username

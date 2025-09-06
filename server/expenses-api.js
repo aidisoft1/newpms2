@@ -72,5 +72,5 @@ app.delete('/api/expenses/:id', async (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Expenses API server running at http://localhost:${port}`)
+  console.log(`Expenses API server running at http://192.168.1.10:${port}`)
 })
