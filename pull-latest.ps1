@@ -36,6 +36,24 @@ if ($status) {
 # 拉取最新版本
 Write-Host "正在拉取最新版本..." -ForegroundColor Yellow
 
+<<<<<<< HEAD
+try {
+    # 首先获取远程更新
+    git fetch origin
+    
+    # 然后合并更改
+    git pull origin $currentBranch
+    
+    Write-Host "✓ 成功拉取最新版本" -ForegroundColor Green
+    
+    # 显示最新的几次提交
+    Write-Host "`n最近的提交记录：" -ForegroundColor Cyan
+    git log --oneline -5
+    
+} catch {
+    Write-Host "✗ 拉取失败：$($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "请检查网络连接和远程仓库地址" -ForegroundColor Yellow
+=======
 # 规范化当前分支名
 $currentBranch = $currentBranch.Trim()
 if ([string]::IsNullOrWhiteSpace($currentBranch)) {
@@ -111,6 +129,7 @@ try {
     Write-Host "✗ 拉取失败：$($_.Exception.Message)" -ForegroundColor Red
     Write-Host "请检查网络、远程地址、SSH 密钥或凭证，并重试。" -ForegroundColor Yellow
     exit 1
+>>>>>>> 1505a9fb516a576df36bde8a01a9c11454e56bb3
 }
 
 Write-Host "`n完成！" -ForegroundColor Green

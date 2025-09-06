@@ -78,8 +78,7 @@ const Garden = sequelize.define('Garden', {
 }, {
   tableName: 'gardens',
   timestamps: true,
-  underscored: true,
-  comment: '管理区表'
+  underscored: true
 });
 
 module.exports = Garden;

@@ -9,6 +9,19 @@ const { Op } = require('sequelize');
 router.get('/', async (req, res) => {
   try {
     const where = {};
+<<<<<<< HEAD
+    if (req.query.RoomName) {
+      where.RoomName = { [Op.like]: `%${req.query.RoomName}%` };
+    }
+    if (req.query.RoomID) {
+      where.RoomID = { [Op.like]: `%${req.query.RoomID}%` };
+    }
+    if (req.query.Build_ID) {
+      where.Build_ID = req.query.Build_ID;
+    }
+    if (req.query.Note) {
+      where.Note = { [Op.like]: `%${req.query.Note}%` };
+=======
     if (req.query.name) {
       where.name = { [Op.like]: `%${req.query.name}%` };
     }
@@ -20,6 +33,7 @@ router.get('/', async (req, res) => {
     }
     if (req.query.description) {
       where.description = { [Op.like]: `%${req.query.description}%` };
+>>>>>>> 1505a9fb516a576df36bde8a01a9c11454e56bb3
     }
     const Rooms = await Room.findAll({ where });
     res.json(Rooms);

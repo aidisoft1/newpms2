@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+// 后端登录API服务，Node.js + Express + mssql
+// 需先安装依赖：npm install express mssql body-parser
+const express = require('express');
+const sql = require('mssql');
+const bodyParser = require('body-parser');
+const sequelize = require('./server/dbConfig');
+const dbConfig = {
+  user: 'sa', password: 'W2Sm1i3KnJR8JkK0', server: 'aidisoft2009.gnway.vip', port: 2433, database: 'Sample', options: { encrypt: false, trustServerCertificate: true }
+};
+=======
 // 后端API服务，Node.js + Express + PostgreSQL
 // 需先安装依赖：npm install express pg sequelize dotenv
 require('dotenv').config();
@@ -43,6 +54,16 @@ app.use('/api/builds', BuildRouter);
 app.use('/api/rooms', RoomRouter);
 app.use('/api/customers', customerRouter);
 
+<<<<<<< HEAD
+// 测试数据库连接（Sequelize）
+sequelize.authenticate()
+  .then(() => console.log('Sequelize MSSQL 连接成功'))
+  .catch(err => console.error('Sequelize 数据库连接失败:', err));
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+=======
 // 启动服务器
 async function startServer() {
   // 测试数据库连接
@@ -70,4 +91,5 @@ async function startServer() {
 startServer().catch(error => {
   console.error('❌ 服务器启动失败:', error);
   process.exit(1);
+>>>>>>> 1505a9fb516a576df36bde8a01a9c11454e56bb3
 });

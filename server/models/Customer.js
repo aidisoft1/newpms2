@@ -1,4 +1,18 @@
 const { DataTypes } = require('sequelize');
+<<<<<<< HEAD
+const  sequelize  = require('../dbConfig');
+
+const Customer = sequelize.define('Customer', {
+  Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  CustomerID: { type: DataTypes.STRING, allowNull: false },
+  CustomerName: { type: DataTypes.STRING, allowNull: false },
+  Birthday: { type: DataTypes.DATEONLY },
+  Mobile: { type: DataTypes.STRING },
+  Note: { type: DataTypes.STRING }
+}, {
+  tableName: 'Customer',
+  timestamps: false
+=======
 const { sequelize } = require('../config/database');
 
 const Customer = sequelize.define('Customer', {
@@ -29,6 +43,7 @@ const Customer = sequelize.define('Customer', {
   tableName: 'customers',
   timestamps: true,
   underscored: true
+>>>>>>> 1505a9fb516a576df36bde8a01a9c11454e56bb3
 });
 
 module.exports = Customer;
